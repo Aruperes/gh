@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Live Monitoring | Asrama GH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background: #0d1117;
+        color: white;
+      }
+      .monitor-frame {
+        border: 4px solid #1f2937;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+      }
+      .alert-active {
+        animation: blink 1s infinite;
+      }
+      @keyframes blink {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body class="p-6">
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h1 class="text-2xl font-bold">LIVE AI SURVEILLANCE</h1>
+        <p class="text-green-500 text-sm flex items-center">
+          <span
+            class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"
+          ></span>
+          System Online - Processing via YOLOv7
+        </p>
+      </div>
+      <a
+        href="/dashboard"
+        class="bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700 transition"
+        >Back to Dashboard</a
+      >
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div class="lg:col-span-3">
+        <div class="monitor-frame rounded-3xl overflow-hidden relative">
+          <img src="/video_feed" class="w-full h-auto" />
+          <div
+            class="absolute top-4 left-4 bg-black/50 px-3 py-1 rounded text-xs"
+          >
+            CAM_01 / FRONT_GATE
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800">
+          <h3 class="text-sm font-bold text-gray-400 mb-4 uppercase">
+            Status Panel
+          </h3>
+          <div class="space-y-4">
+            <div class="flex justify-between border-b border-gray-800 pb-2">
+              <span class="text-gray-500">Recognition</span>
+              <span class="text-blue-400">ACTIVE</span>
+            </div>
+            <div class="flex justify-between border-b border-gray-800 pb-2">
+              <span class="text-gray-500">Alert Mode</span>
+              <span class="text-red-500 font-bold underline">ENABLED</span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="alert-container"
+          class="hidden bg-red-600 p-6 rounded-2xl alert-active"
+        >
+          <h3 class="text-xl font-black text-white italic">
+            ⚠️ SECURITY ALERT
+          </h3>
+          <p class="text-xs">
+            Unauthorized person detected entering dormitory premises!
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

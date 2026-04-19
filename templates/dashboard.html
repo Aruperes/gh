@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dashboard | Asrama GH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background: #0d1117;
+        font-family: "Inter", sans-serif;
+      }
+      .glass {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .card-hover:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+      }
+    </style>
+  </head>
+  <body class="text-gray-200">
+    <nav
+      class="p-6 border-b border-gray-800 flex justify-between items-center bg-[#161b22]"
+    >
+      <h2 class="text-xl font-bold text-blue-400 uppercase tracking-tighter">
+        ASRAMA GH <span class="text-xs text-gray-500 ml-2">V1.0</span>
+      </h2>
+      <div class="flex items-center gap-4 text-sm">
+        <span
+          class="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full border border-blue-500/20"
+          >Logged as: {{ role.upper() }}</span
+        >
+        <a href="/logout" class="text-red-400 hover:text-red-300">Logout</a>
+      </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-10">
+      <h1 class="text-4xl font-light mb-10">
+        Welcome Back, <span class="font-bold text-white">{{ user }}</span>
+      </h1>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <a
+          href="/operator/monitor"
+          class="glass p-8 rounded-2xl card-hover transition-all flex flex-col items-center text-center"
+        >
+          <div class="text-4xl mb-4">📹</div>
+          <h3 class="text-xl font-bold mb-2">Live Monitor</h3>
+          <p class="text-gray-500 text-sm">
+            Aktifkan kamera AI dan pemantauan real-time.
+          </p>
+        </a>
+
+        {% if role == 'admin' %}
+        <a
+          href="/admin/mahasiswa"
+          class="glass p-8 rounded-2xl card-hover transition-all flex flex-col items-center text-center"
+        >
+          <div class="text-4xl mb-4">👥</div>
+          <h3 class="text-xl font-bold mb-2">Data Mahasiswa</h3>
+          <p class="text-gray-500 text-sm">
+            Manajemen database penghuni asrama.
+          </p>
+        </a>
+
+        <a
+          href="/admin/history"
+          class="glass p-8 rounded-2xl card-hover transition-all flex flex-col items-center text-center"
+        >
+          <div class="text-4xl mb-4">📊</div>
+          <h3 class="text-xl font-bold mb-2">Historical Logs</h3>
+          <p class="text-gray-500 text-sm">
+            Laporan riwayat kedatangan dan peringatan.
+          </p>
+        </a>
+        {% endif %}
+      </div>
+    </main>
+  </body>
+</html>
