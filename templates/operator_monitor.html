@@ -27,6 +27,23 @@
           opacity: 1;
         }
       }
+      .tab-button {
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .tab-button.active {
+        background-color: #3b82f6;
+        color: white;
+      }
+      .tab-button:not(.active) {
+        background-color: #374151;
+        color: #9ca3af;
+      }
+      .tab-button:hover:not(.active) {
+        background-color: #4b5563;
+      }
     </style>
   </head>
   <body class="p-6">
@@ -47,10 +64,29 @@
       >
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Tab Selection -->
+    <div class="mb-6 flex gap-2">
+      <button
+        onclick="switchTab('live')"
+        id="tab-live"
+        class="tab-button active"
+      >
+        📷 Live Camera
+      </button>
+      <button
+        onclick="switchTab('upload')"
+        id="tab-upload"
+        class="tab-button"
+      >
+        📁 Upload Image
+      </button>
+    </div>
+
+    <!-- Live Camera Tab -->
+    <div id="live-tab" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <div class="lg:col-span-3">
-        <div class="monitor-frame rounded-3xl overflow-hidden relative">
-          <img src="/video_feed" class="w-full h-auto" />
+        <div class="monitor-frame rounded-3xl overflow-hidden relative bg-black flex items-center justify-center">
+          <img src="/video_feed" class="max-w-full max-h-96 h-auto object-contain" />
           <div
             class="absolute top-4 left-4 bg-black/50 px-3 py-1 rounded text-xs"
           >
@@ -89,5 +125,198 @@
         </div>
       </div>
     </div>
+
+    <!-- Upload Image Tab -->
+    <div id="upload-tab" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div class="lg:col-span-3">
+        <!-- Upload Area -->
+        <div
+          class="monitor-frame rounded-3xl overflow-hidden relative bg-gray-900 p-8 border-2 border-dashed border-gray-600 text-center min-h-96 flex flex-col items-center justify-center"
+          id="upload-area"
+        >
+          <input
+            type="file"
+            id="image-input"
+            accept="image/*"
+            style="display: none"
+            onchange="handleImageUpload(event)"
+          />
+
+          <div id="upload-placeholder" class="flex flex-col items-center gap-4">
+            <div class="text-6xl">📸</div>
+            <p class="text-xl font-semibold">Drag & drop image here</p>
+            <p class="text-gray-400">or</p>
+            <button
+              onclick="document.getElementById('image-input').click()"
+              class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-semibold transition"
+            >
+              Click to Select Image
+            </button>
+            <p class="text-gray-500 text-sm">Supported: PNG, JPG, JPEG, GIF</p>
+          </div>
+
+          <div id="upload-result" class="hidden w-full flex flex-col items-center">
+            <img
+              id="result-image"
+              src=""
+              class="max-w-full max-h-96 h-auto object-contain rounded-lg mb-4"
+            />
+            <div id="detection-list" class="text-left w-full"></div>
+          </div>
+
+          <!-- Loading indicator -->
+          <div id="loading" class="hidden text-center">
+            <div class="animate-spin text-4xl mb-2">⏳</div>
+            <p>Processing image...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detection Results -->
+      <div class="space-y-6">
+        <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800">
+          <h3 class="text-sm font-bold text-gray-400 mb-4 uppercase">
+            Detection Results
+          </h3>
+          <div id="results-panel" class="text-gray-500">
+            Upload an image to see results
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function switchTab(tab) {
+        const liveTab = document.getElementById("live-tab");
+        const uploadTab = document.getElementById("upload-tab");
+        const liveBtn = document.getElementById("tab-live");
+        const uploadBtn = document.getElementById("tab-upload");
+
+        if (tab === "live") {
+          liveTab.classList.remove("hidden");
+          uploadTab.classList.add("hidden");
+          liveBtn.classList.add("active");
+          uploadBtn.classList.remove("active");
+        } else {
+          liveTab.classList.add("hidden");
+          uploadTab.classList.remove("hidden");
+          liveBtn.classList.remove("active");
+          uploadBtn.classList.add("active");
+        }
+      }
+
+      function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        // Show loading
+        document.getElementById("upload-placeholder").classList.add("hidden");
+        document.getElementById("loading").classList.remove("hidden");
+
+        // Upload with credentials to maintain session
+        fetch("/upload_image", {
+          method: "POST",
+          body: formData,
+          credentials: "same-origin"  // Important: send session cookies
+        })
+          .then((response) => {
+            console.log("Response status:", response.status);
+            console.log("Response headers:", response.headers);
+            
+            if (!response.ok) {
+              if (response.status === 401) {
+                throw new Error("Session expired. Please refresh and login again.");
+              }
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+              console.log("Response is not JSON:", contentType);
+              return response.text().then(text => {
+                console.log("Response text:", text.substring(0, 200));
+                throw new Error("Server returned non-JSON response. You may need to login again.");
+              });
+            }
+            
+            return response.json();
+          })
+          .then((data) => {
+            document.getElementById("loading").classList.add("hidden");
+
+            if (data.success) {
+              // Show result image
+              document.getElementById("result-image").src = data.image;
+              document.getElementById("upload-result").classList.remove("hidden");
+
+              // Build detection list
+              let detectionHTML = "<div class='space-y-2'>";
+              if (data.detections.length === 0) {
+                detectionHTML += "<p class='text-gray-400'>No person detected</p>";
+              } else {
+                data.detections.forEach((det) => {
+                  const statusColor =
+                    det.status === "ASRAMA" ? "text-green-400" : "text-red-400";
+                  detectionHTML += `
+                    <div class="bg-gray-800 p-3 rounded">
+                      <p class="font-semibold">${det.nama}</p>
+                      <p class="text-sm ${statusColor}">${det.status}</p>
+                      <p class="text-xs text-gray-500">Confidence: ${(det.confidence * 100).toFixed(1)}%</p>
+                    </div>
+                  `;
+                });
+              }
+              detectionHTML += "</div>";
+              document.getElementById("detection-list").innerHTML = detectionHTML;
+
+              // Update results panel
+              document.getElementById("results-panel").innerHTML = `
+                <div class="space-y-2">
+                  <p class="text-green-400 font-semibold">${data.message}</p>
+                  ${detectionHTML}
+                </div>
+              `;
+            } else {
+              document.getElementById("upload-placeholder").classList.remove("hidden");
+              document.getElementById("results-panel").innerHTML = `<p class="text-red-400">Error: ${data.error}</p>`;
+              alert("Error: " + data.error);
+            }
+          })
+          .catch((error) => {
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("upload-placeholder").classList.remove("hidden");
+            document.getElementById("results-panel").innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+            console.error("Upload error:", error);
+            alert("Upload failed: " + error.message);
+          });
+      }
+
+      // Drag and drop functionality
+      const uploadArea = document.getElementById("upload-area");
+      uploadArea.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = "#3b82f6";
+        uploadArea.style.backgroundColor = "rgba(59, 130, 246, 0.1)";
+      });
+
+      uploadArea.addEventListener("dragleave", () => {
+        uploadArea.style.borderColor = "#4b5563";
+        uploadArea.style.backgroundColor = "transparent";
+      });
+
+      uploadArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = "#4b5563";
+        uploadArea.style.backgroundColor = "transparent";
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          document.getElementById("image-input").files = files;
+          handleImageUpload({ target: { files: files } });
+        }
+      });
+    </script>
   </body>
 </html>
