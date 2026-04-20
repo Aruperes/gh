@@ -2,321 +2,272 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Live Monitoring | Asrama GH</title>
+    <title>Live Monitor - GH AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
     <style>
       body {
-        background: #0d1117;
+        background-color: #020617;
         color: white;
       }
-      .monitor-frame {
-        border: 4px solid #1f2937;
-        box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
-      }
-      .alert-active {
-        animation: blink 1s infinite;
-      }
-      @keyframes blink {
-        0% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.3;
-        }
-        100% {
-          opacity: 1;
-        }
-      }
-      .tab-button {
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        cursor: pointer;
-        transition: all 0.3s;
-      }
-      .tab-button.active {
-        background-color: #3b82f6;
-        color: white;
-      }
-      .tab-button:not(.active) {
-        background-color: #374151;
-        color: #9ca3af;
-      }
-      .tab-button:hover:not(.active) {
-        background-color: #4b5563;
+      .glass-panel {
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(51, 65, 85, 0.5);
       }
     </style>
   </head>
-  <body class="p-6">
-    <div class="flex justify-between items-center mb-6">
-      <div>
-        <h1 class="text-2xl font-bold">LIVE AI SURVEILLANCE</h1>
-        <p class="text-green-500 text-sm flex items-center">
-          <span
-            class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"
-          ></span>
-          System Online - Processing via YOLOv7
-        </p>
+  <body class="h-screen overflow-hidden flex">
+    <aside
+      class="w-80 bg-slate-900 border-r border-slate-800 p-6 flex flex-col"
+    >
+      <div class="mb-10 text-blue-500 font-black text-2xl uppercase italic">
+        GH Monitor
       </div>
+
+      <div class="flex-1 space-y-6">
+        <button
+          onclick="document.getElementById('imageInput').click()"
+          class="w-full bg-blue-600 hover:bg-blue-500 p-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition"
+        >
+          <i class="fas fa-upload"></i> Upload Foto
+        </button>
+        <input
+          type="file"
+          id="imageInput"
+          class="hidden"
+          onchange="uploadImage()"
+        />
+
+        <div id="resultBox" class="hidden">
+          <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-4">
+            Hasil Deteksi
+          </p>
+          <div id="detectionList" class="space-y-3"></div>
+        </div>
+      </div>
+
       <a
         href="/dashboard"
-        class="bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700 transition"
-        >Back to Dashboard</a
+        class="text-slate-500 text-xs hover:text-white transition"
+        ><i class="fas fa-arrow-left mr-2"></i> Dashboard</a
       >
-    </div>
+    </aside>
 
-    <!-- Tab Selection -->
-    <div class="mb-6 flex gap-2">
-      <button
-        onclick="switchTab('live')"
-        id="tab-live"
-        class="tab-button active"
-      >
-        📷 Live Camera
-      </button>
-      <button
-        onclick="switchTab('upload')"
-        id="tab-upload"
-        class="tab-button"
-      >
-        📁 Upload Image
-      </button>
-    </div>
-
-    <!-- Live Camera Tab -->
-    <div id="live-tab" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <div class="lg:col-span-3">
-        <div class="monitor-frame rounded-3xl overflow-hidden relative bg-black flex items-center justify-center">
-          <img src="/video_feed" class="max-w-full max-h-96 h-auto object-contain" />
-          <div
-            class="absolute top-4 left-4 bg-black/50 px-3 py-1 rounded text-xs"
+    <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <section class="flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xs font-bold uppercase tracking-widest">Live Feed</h2>
+          <button
+            onclick="toggleCam()"
+            id="camBtn"
+            class="px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-[10px] font-bold uppercase"
           >
-            CAM_01 / FRONT_GATE
-          </div>
+            <i id="camIcon" class="fas fa-video mr-2"></i>
+            <span id="camText">Stop Camera</span>
+          </button>
         </div>
-      </div>
-
-      <div class="space-y-6">
-        <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800">
-          <h3 class="text-sm font-bold text-gray-400 mb-4 uppercase">
-            Status Panel
-          </h3>
-          <div class="space-y-4">
-            <div class="flex justify-between border-b border-gray-800 pb-2">
-              <span class="text-gray-500">Recognition</span>
-              <span class="text-blue-400">ACTIVE</span>
-            </div>
-            <div class="flex justify-between border-b border-gray-800 pb-2">
-              <span class="text-gray-500">Alert Mode</span>
-              <span class="text-red-500 font-bold underline">ENABLED</span>
-            </div>
-          </div>
-        </div>
-
         <div
-          id="alert-container"
-          class="hidden bg-red-600 p-6 rounded-2xl alert-active"
+          class="bg-black rounded-3xl overflow-hidden border-2 border-blue-500/20 flex-1 flex items-center justify-center"
         >
-          <h3 class="text-xl font-black text-white italic">
-            ⚠️ SECURITY ALERT
-          </h3>
-          <p class="text-xs">
-            Unauthorized person detected entering dormitory premises!
+          <img
+            id="videoStream"
+            src="{{ url_for('video_feed') }}"
+            class="w-full h-full object-cover"
+          />
+        </div>
+      </section>
+
+      <section class="flex flex-col">
+        <h2
+          class="text-xs font-bold uppercase tracking-widest mb-4 text-blue-400"
+        >
+          Static Analysis
+        </h2>
+        <div
+          id="imageDisplay"
+          class="bg-slate-950 rounded-3xl border border-slate-800 flex-1 flex items-center justify-center overflow-hidden"
+        >
+          <p class="text-slate-700 italic text-sm">Menunggu upload...</p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      async function toggleCam() {
+        const res = await fetch("/toggle_camera", { method: "POST" });
+        const data = await res.json();
+        const btn = document.getElementById("camBtn");
+        const text = document.getElementById("camText");
+        const icon = document.getElementById("camIcon");
+
+        if (data.active) {
+          btn.className =
+            "px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-[10px] font-bold uppercase";
+          text.innerText = "Stop Camera";
+          icon.className = "fas fa-video mr-2";
+        } else {
+          btn.className =
+            "px-4 py-1.5 rounded-full bg-red-900 border border-red-500 text-[10px] font-bold uppercase";
+          text.innerText = "Start Camera";
+          icon.className = "fas fa-video-slash mr-2";
+        }
+      }
+
+      async function uploadImage() {
+        const file = document.getElementById("imageInput").files[0];
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const display = document.getElementById("imageDisplay");
+        display.innerHTML =
+          '<div class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>';
+
+        const res = await fetch("/upload_image", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          display.innerHTML = `<img src="${data.image}" class="max-w-full max-h-full object-contain">`;
+          document.getElementById("resultBox").classList.remove("hidden");
+          document.getElementById("detectionList").innerHTML = data.detections
+            .map(
+              (d) => `
+                    <div class="p-4 bg-slate-800 rounded-2xl border-l-4 border-green-500">
+                        <p class="font-bold">${d.nama}</p>
+                        <p class="text-[10px] text-slate-500">Confidence: ${(d.confidence * 100).toFixed(1)}%</p>
+                    </div>
+                `,
+            )
+            .join("");
+        }
+      }
+    </script>
+    <div
+      id="alertBox"
+      class="hidden fixed top-10 left-1/2 -translate-x-1/2 z-50 animate-bounce"
+    >
+      <div
+        class="bg-red-600 text-white px-8 py-4 rounded-2xl shadow-[0_0_30px_rgba(220,38,38,0.5)] border-2 border-white flex items-center gap-4"
+      >
+        <i class="fas fa-exclamation-triangle text-2xl animate-pulse"></i>
+        <div>
+          <p class="font-black tracking-tighter text-lg uppercase">
+            Security Alert!
+          </p>
+          <p class="text-xs font-bold opacity-80 uppercase tracking-widest">
+            Wajah tidak dikenal terdeteksi!
           </p>
         </div>
       </div>
     </div>
 
-    <!-- Upload Image Tab -->
-    <div id="upload-tab" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <div class="lg:col-span-3">
-        <!-- Upload Area -->
-        <div
-          class="monitor-frame rounded-3xl overflow-hidden relative bg-gray-900 p-8 border-2 border-dashed border-gray-600 text-center min-h-96 flex flex-col items-center justify-center"
-          id="upload-area"
-        >
-          <input
-            type="file"
-            id="image-input"
-            accept="image/*"
-            style="display: none"
-            onchange="handleImageUpload(event)"
-          />
-
-          <div id="upload-placeholder" class="flex flex-col items-center gap-4">
-            <div class="text-6xl">📸</div>
-            <p class="text-xl font-semibold">Drag & drop image here</p>
-            <p class="text-gray-400">or</p>
-            <button
-              onclick="document.getElementById('image-input').click()"
-              class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-semibold transition"
-            >
-              Click to Select Image
-            </button>
-            <p class="text-gray-500 text-sm">Supported: PNG, JPG, JPEG, GIF</p>
-          </div>
-
-          <div id="upload-result" class="hidden w-full flex flex-col items-center">
-            <img
-              id="result-image"
-              src=""
-              class="max-w-full max-h-96 h-auto object-contain rounded-lg mb-4"
-            />
-            <div id="detection-list" class="text-left w-full"></div>
-          </div>
-
-          <!-- Loading indicator -->
-          <div id="loading" class="hidden text-center">
-            <div class="animate-spin text-4xl mb-2">⏳</div>
-            <p>Processing image...</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Detection Results -->
-      <div class="space-y-6">
-        <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800">
-          <h3 class="text-sm font-bold text-gray-400 mb-4 uppercase">
-            Detection Results
-          </h3>
-          <div id="results-panel" class="text-gray-500">
-            Upload an image to see results
-          </div>
-        </div>
-      </div>
-    </div>
+    <audio id="alertSound" preload="auto" loop>
+      <source
+        src="https://actions.google.com/sounds/v1/alarms/industrial_alarm_loop.ogg"
+        type="audio/ogg"
+      />
+    </audio>
 
     <script>
-      function switchTab(tab) {
-        const liveTab = document.getElementById("live-tab");
-        const uploadTab = document.getElementById("upload-tab");
-        const liveBtn = document.getElementById("tab-live");
-        const uploadBtn = document.getElementById("tab-upload");
+      let isAlerting = false;
+      let audioCtx = null;
+      let oscillator = null;
 
-        if (tab === "live") {
-          liveTab.classList.remove("hidden");
-          uploadTab.classList.add("hidden");
-          liveBtn.classList.add("active");
-          uploadBtn.classList.remove("active");
-        } else {
-          liveTab.classList.add("hidden");
-          uploadTab.classList.remove("hidden");
-          liveBtn.classList.remove("active");
-          uploadBtn.classList.add("active");
+      // Fungsi untuk membuat suara alarm sintetis (pasti bunyi)
+      function startAlarmSound() {
+        if (!audioCtx)
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        if (oscillator) return;
+
+        oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = "square";
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+        const volumeLevel = 0.1;
+
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          volumeLevel,
+          audioCtx.currentTime + 0.1,
+        );
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+
+        // Efek sirine tetap sama
+        let rising = true;
+        setInterval(() => {
+          if (!oscillator) return;
+          if (rising) {
+            oscillator.frequency.exponentialRampToValueAtTime(
+              1200,
+              audioCtx.currentTime + 0.5,
+            );
+          } else {
+            oscillator.frequency.exponentialRampToValueAtTime(
+              800,
+              audioCtx.currentTime + 0.5,
+            );
+          }
+          rising = !rising;
+        }, 500);
+      }
+
+      function stopAlarmSound() {
+        if (oscillator) {
+          oscillator.stop();
+          oscillator.disconnect();
+          oscillator = null;
         }
       }
 
-      function handleImageUpload(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+      // Pancing izin audio saat pertama kali klik di mana saja
+      document.addEventListener(
+        "click",
+        function () {
+          if (!audioCtx)
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          if (audioCtx.state === "suspended") audioCtx.resume();
+          console.log("Audio System Activated");
+        },
+        { once: true },
+      );
 
-        const formData = new FormData();
-        formData.append("file", file);
+      async function monitorAlerts() {
+        try {
+          const res = await fetch("/check_alert");
+          const data = await res.json();
+          const alertEl = document.getElementById("alertBox");
 
-        // Show loading
-        document.getElementById("upload-placeholder").classList.add("hidden");
-        document.getElementById("loading").classList.remove("hidden");
-
-        // Upload with credentials to maintain session
-        fetch("/upload_image", {
-          method: "POST",
-          body: formData,
-          credentials: "same-origin"  // Important: send session cookies
-        })
-          .then((response) => {
-            console.log("Response status:", response.status);
-            console.log("Response headers:", response.headers);
-            
-            if (!response.ok) {
-              if (response.status === 401) {
-                throw new Error("Session expired. Please refresh and login again.");
-              }
-              throw new Error(`HTTP error! status: ${response.status}`);
+          if (data.alert) {
+            if (!isAlerting) {
+              alertEl.classList.remove("hidden");
+              startAlarmSound(); // Jalankan suara sintetis
+              isAlerting = true;
             }
-            
-            const contentType = response.headers.get("content-type");
-            if (!contentType || !contentType.includes("application/json")) {
-              console.log("Response is not JSON:", contentType);
-              return response.text().then(text => {
-                console.log("Response text:", text.substring(0, 200));
-                throw new Error("Server returned non-JSON response. You may need to login again.");
-              });
+          } else {
+            if (isAlerting) {
+              alertEl.classList.add("hidden");
+              stopAlarmSound(); // Matikan suara sintetis
+              isAlerting = false;
             }
-            
-            return response.json();
-          })
-          .then((data) => {
-            document.getElementById("loading").classList.add("hidden");
-
-            if (data.success) {
-              // Show result image
-              document.getElementById("result-image").src = data.image;
-              document.getElementById("upload-result").classList.remove("hidden");
-
-              // Build detection list
-              let detectionHTML = "<div class='space-y-2'>";
-              if (data.detections.length === 0) {
-                detectionHTML += "<p class='text-gray-400'>No person detected</p>";
-              } else {
-                data.detections.forEach((det) => {
-                  const statusColor =
-                    det.status === "ASRAMA" ? "text-green-400" : "text-red-400";
-                  detectionHTML += `
-                    <div class="bg-gray-800 p-3 rounded">
-                      <p class="font-semibold">${det.nama}</p>
-                      <p class="text-sm ${statusColor}">${det.status}</p>
-                      <p class="text-xs text-gray-500">Confidence: ${(det.confidence * 100).toFixed(1)}%</p>
-                    </div>
-                  `;
-                });
-              }
-              detectionHTML += "</div>";
-              document.getElementById("detection-list").innerHTML = detectionHTML;
-
-              // Update results panel
-              document.getElementById("results-panel").innerHTML = `
-                <div class="space-y-2">
-                  <p class="text-green-400 font-semibold">${data.message}</p>
-                  ${detectionHTML}
-                </div>
-              `;
-            } else {
-              document.getElementById("upload-placeholder").classList.remove("hidden");
-              document.getElementById("results-panel").innerHTML = `<p class="text-red-400">Error: ${data.error}</p>`;
-              alert("Error: " + data.error);
-            }
-          })
-          .catch((error) => {
-            document.getElementById("loading").classList.add("hidden");
-            document.getElementById("upload-placeholder").classList.remove("hidden");
-            document.getElementById("results-panel").innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
-            console.error("Upload error:", error);
-            alert("Upload failed: " + error.message);
-          });
+          }
+        } catch (e) {
+          console.log("Gagal mengecek status alert");
+        }
       }
 
-      // Drag and drop functionality
-      const uploadArea = document.getElementById("upload-area");
-      uploadArea.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        uploadArea.style.borderColor = "#3b82f6";
-        uploadArea.style.backgroundColor = "rgba(59, 130, 246, 0.1)";
-      });
-
-      uploadArea.addEventListener("dragleave", () => {
-        uploadArea.style.borderColor = "#4b5563";
-        uploadArea.style.backgroundColor = "transparent";
-      });
-
-      uploadArea.addEventListener("drop", (e) => {
-        e.preventDefault();
-        uploadArea.style.borderColor = "#4b5563";
-        uploadArea.style.backgroundColor = "transparent";
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-          document.getElementById("image-input").files = files;
-          handleImageUpload({ target: { files: files } });
-        }
-      });
+      setInterval(monitorAlerts, 1000);
     </script>
   </body>
 </html>

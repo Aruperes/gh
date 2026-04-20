@@ -2,65 +2,53 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Database | Admin</title>
+    <title>Log History - GH System</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body class="bg-[#0d1117] text-gray-200 p-10">
-    <div class="max-w-5xl mx-auto">
-      <div class="flex justify-between items-end mb-10">
-        <div>
-          <h1 class="text-3xl font-bold">Daftar Mahasiswa</h1>
-          <p class="text-gray-500">Manajemen akses dan label recognition</p>
-        </div>
-        <button
-          class="bg-blue-600 px-6 py-2 rounded-full font-bold hover:bg-blue-500"
+  <body class="bg-slate-950 text-slate-200 p-8">
+    <div class="max-w-4xl mx-auto">
+      <div class="flex justify-between items-center mb-8">
+        <h2 class="text-2xl font-bold">
+          <i class="fas fa-clock mr-3 text-blue-500"></i>Attendance Logs
+        </h2>
+        <a href="/dashboard" class="bg-slate-800 px-4 py-2 rounded-lg text-sm"
+          >Kembali</a
         >
-          + Tambah Mahasiswa
-        </button>
       </div>
 
       <div
-        class="bg-gray-900 rounded-3xl overflow-hidden border border-gray-800 shadow-2xl"
+        class="bg-slate-900 rounded-3xl overflow-hidden border border-slate-800"
       >
         <table class="w-full text-left">
-          <thead
-            class="bg-gray-800 text-gray-400 text-xs uppercase tracking-widest"
-          >
+          <thead class="bg-slate-800 text-slate-400 text-xs uppercase">
             <tr>
-              <th class="p-5">ID</th>
-              <th class="p-5">Full Name</th>
-              <th class="p-5">Model Label</th>
-              <th class="p-5">Status</th>
-              <th class="p-5">Action</th>
+              <th class="p-4">Timestamp</th>
+              <th class="p-4">Nama Mahasiswa</th>
+              <th class="p-4">Status</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-800">
-            {% for m in mahasiswa %}
-            <tr class="hover:bg-gray-800/50 transition">
-              <td class="p-5 text-gray-500">{{ m.id }}</td>
-              <td class="p-5 font-bold">{{ m.nama }}</td>
-              <td class="p-5 font-mono text-blue-400">{{ m.label }}</td>
-              <td class="p-5">
+          <tbody class="divide-y divide-slate-800">
+            {% for item in history|reverse %}
+            <tr class="hover:bg-slate-800/50 transition">
+              <td class="p-4 font-mono text-blue-400">{{ item.waktu }}</td>
+              <td class="p-4 font-bold">{{ item.nama }}</td>
+              <td class="p-4">
+                {% if item.nama == "STRANGER / BUKAN ASRAMA" %}
                 <span
-                  class="px-3 py-1 rounded-full text-xs font-bold {{ 'bg-green-500/10 text-green-500' if m.status == 'asrama' else 'bg-red-500/10 text-red-500' }}"
+                  class="text-red-400 bg-red-400/10 px-2 py-1 rounded text-xs"
+                  >Unknown</span
                 >
-                  {{ m.status.upper() }}
-                </span>
-              </td>
-              <td
-                class="p-5 text-sm text-blue-500 hover:underline cursor-pointer"
-              >
-                Edit
+                {% else %}
+                <span
+                  class="text-green-400 bg-green-400/10 px-2 py-1 rounded text-xs"
+                  >Verified</span
+                >
+                {% endif %}
               </td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
-      </div>
-      <div class="mt-6">
-        <a href="/dashboard" class="text-gray-500 hover:text-white"
-          >← Kembali ke Dashboard</a
-        >
       </div>
     </div>
   </body>
